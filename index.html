@@ -1,0 +1,1544 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="app-version" content="1.0.0">
+<title>Music Clip &amp; SRT Cutter for Short Movie v1.0.0</title>
+<style>
+  :root {
+    --bg: #111318;
+    --panel: #1a1d24;
+    --panel2: #222734;
+    --text: #e8eaf0;
+    --muted: #9ba3b4;
+    --line: #384052;
+    --accent: #7aa2ff;
+    --good: #8bd69e;
+    --warn: #ffd36d;
+    --danger: #ff8989;
+    --purple: #c59cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+  }
+  header {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--line);
+    background: #151821;
+  }
+  .topBar { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .titleBlock { min-width: 0; }
+  .languageBox { min-width: 170px; }
+  .languageBox label { margin-top: 0; }
+  h1 { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 12px; }
+  main {
+    display: grid;
+    grid-template-columns: 330px 1fr 340px;
+    gap: 10px;
+    padding: 10px;
+    min-height: calc(100vh - 70px);
+  }
+  section, .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .panelHead {
+    padding: 10px 12px;
+    background: var(--panel2);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .panelBody { padding: 10px 12px; }
+  label { display: block; margin: 9px 0 4px; color: var(--muted); font-size: 12px; }
+  input[type="file"], input[type="number"], input[type="text"], textarea, select {
+    width: 100%;
+    padding: 7px 8px;
+    color: var(--text);
+    background: #0f1218;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  button {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: #2a3040;
+    color: var(--text);
+    border-radius: 7px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-weight: 650;
+  }
+  button:hover { background: #343b4f; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .hiddenFileInput { display: none; }
+  .fileGroupLabel { display: block; margin-bottom: 6px; color: var(--text); font-size: 13px; font-weight: 650; }
+  .fileButtonRow { display: flex; gap: 8px; margin: 0 0 8px; }
+  .filePickButton { flex: 1; min-width: 0; text-align: center; padding: 7px 9px; }
+  .actionBtn { min-width: 78px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .actionBtn::before { font-size: 14px; line-height: 1; }
+  .icon-start::before { content: '⏮'; color: var(--accent); }
+  .icon-play::before { content: '▶'; color: var(--good); }
+  .icon-stop::before { content: '■'; color: var(--danger); }
+  .icon-zoom-in::before { content: '＋'; color: var(--warn); font-weight: 900; }
+  .icon-standard::before { content: '◆'; color: var(--good); }
+  .icon-zoom-out::before { content: '－'; color: var(--warn); font-weight: 900; }
+  .icon-show-all::before { content: '▣'; color: var(--purple); }
+  .icon-end::before { content: '⏭'; color: var(--danger); }
+  .icon-undo::before { content: '↶'; color: var(--warn); }
+  .undoRow { display: flex; justify-content: flex-end; }
+  .undoRow button { flex: 0 0 auto; }
+  .row { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .row > button { flex: 1 0 auto; }
+  .small { font-size: 12px; color: var(--muted); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .kv { display: grid; grid-template-columns: 130px 1fr; gap: 5px 9px; font-size: 12px; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  .canvasWrap {
+    position: relative;
+    height: 360px;
+    background: #0d1016;
+    border-bottom: 1px solid var(--line);
+  }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  .legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .chip { display: inline-flex; align-items: center; gap: 5px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .timelineControls { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .srtList {
+    max-height: calc(100vh - 250px);
+    overflow: auto;
+    padding: 0;
+  }
+  .srtItem {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    cursor: pointer;
+  }
+  .srtItem:hover { background: rgba(255,255,255,.05); }
+  .srtItem.active { background: rgba(122,162,255,.16); outline: 1px solid rgba(122,162,255,.35); }
+  .srtTime { color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+  .srtText { font-size: 13px; white-space: pre-wrap; line-height: 1.35; }
+  .status {
+    min-height: 42px;
+    padding: 8px 10px;
+    background: #0f1218;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    white-space: pre-wrap;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .warn { color: var(--warn); }
+  .danger { color: var(--danger); }
+  .good { color: var(--good); }
+  .spacer { height: 10px; }
+  .footerButtons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dropZone {
+    margin-top: 6px;
+    padding: 10px 10px;
+    border: 1.5px dashed var(--line);
+    border-radius: 9px;
+    background: rgba(122,162,255,.055);
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.35;
+    user-select: none;
+  }
+  .dropZone strong { color: var(--text); font-size: 13px; }
+  .dropZone.dragOver {
+    border-color: var(--accent);
+    background: rgba(122,162,255,.16);
+    color: var(--text);
+    box-shadow: inset 0 0 0 1px rgba(122,162,255,.25);
+  }
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; }
+    .srtList { max-height: 300px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="topBar">
+    <div class="titleBlock">
+      <h1 data-i18n="appTitle" data-tip="appTitleTip">Music Clip &amp; SRT Cutter for Short Movie v1.0.0</h1>
+      <div class="sub" data-i18n="appSubtitle" data-tip="appSubtitleTip">HTML5単体版。MP3/WAV + 完成済みSRTから、ショート用WAV/SRTを作成します。</div>
+    </div>
+    <div class="languageBox">
+      <label for="languageSelect" data-i18n="languageLabel" data-tip="languageTip">言語／Language</label>
+      <select id="languageSelect" data-tip="languageTip">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </div>
+</header>
+<main>
+  <section>
+    <div class="panelHead" data-i18n="inputPanel" data-tip="inputPanelTip">入力とSRT</div>
+    <div class="panelBody">
+      <label class="fileGroupLabel" data-i18n="fileGroupLabel" data-tip="fileGroupTip">音源ファイル（MP3/WAV）、SRTファイル</label>
+      <input id="audioFile" class="hiddenFileInput" type="file" accept="audio/*,.mp3,.wav" data-tip="audioFileTip">
+      <input id="srtFile" class="hiddenFileInput" type="file" accept=".srt,text/plain" data-tip="srtFileTip">
+      <div class="fileButtonRow">
+        <button id="audioPickBtn" class="filePickButton" type="button" data-i18n="audioPickBtn" data-tip="audioFileTip">音源を選択</button>
+        <button id="srtPickBtn" class="filePickButton" type="button" data-i18n="srtPickBtn" data-tip="srtFileTip">SRTを選択</button>
+      </div>
+      <div id="dropZone" class="dropZone" data-tip="dropZoneTip">
+        <strong data-i18n="dropZoneTitle">音源とSRTをここにドロップ</strong><br>
+        <span data-i18n="dropZoneBody">MP3/WAVとSRTをまとめて読み込めます。新しいファイルを読むと編集状態はリセットされます。</span>
+      </div>
+      <div class="spacer"></div>
+      <div id="loadStatus" class="status" data-i18n="loadStatusInitial" data-tip="loadStatusTip">音源とSRTを読み込んでください。</div>
+    </div>
+    <div class="panelHead" data-i18n="srtListPanel" data-tip="srtListTip">SRT一覧</div>
+    <div id="srtList" class="srtList"></div>
+  </section>
+
+  <section>
+    <div class="panelHead" data-i18n="wavePanel" data-tip="wavePanelTip">波形・再生</div>
+    <div class="canvasWrap"><canvas id="waveCanvas" data-tip="wavePanelTip"></canvas></div>
+    <div class="timelineControls">
+      <div class="row">
+        <button id="toStartBtn" class="actionBtn icon-start" data-i18n="toStartBtn" data-tip="toStartTip" disabled>先頭へ</button>
+        <button id="playBtn" class="actionBtn icon-play" data-i18n="playBtn" data-tip="playTip" disabled>再生</button>
+        <button id="zoomOutBtn" class="actionBtn icon-zoom-out" data-i18n="zoomOutBtn" data-tip="zoomOutTip" disabled>縮小</button>
+        <button id="standardZoomBtn" class="actionBtn icon-standard" data-i18n="standardZoomBtn" data-tip="standardZoomTip" disabled>標準倍率</button>
+        <button id="zoomInBtn" class="actionBtn icon-zoom-in" data-i18n="zoomInBtn" data-tip="zoomInTip" disabled>拡大</button>
+        <button id="showAllBtn" class="actionBtn icon-show-all" data-i18n="showAllBtn" data-tip="showAllTip" disabled>全体表示</button>
+        <button id="showEndBtn" class="actionBtn icon-end" data-i18n="showEndBtn" data-tip="showEndTip" disabled>終端へ</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="kv mono">
+        <div data-i18n="viewModeLabelName">表示モード</div><div id="viewModeLabel">未読込</div>
+        <div data-i18n="selectedPositionLabelName">選択位置</div><div id="playheadLabel">--</div>
+        <div data-i18n="sourcePositionLabelName">選択元音源位置</div><div id="sourceTimeLabel">--</div>
+        <div data-i18n="playCursorLabelName">再生カーソル</div><div id="playCursorLabel">--</div>
+        <div data-i18n="currentSubtitleLabelName">表示字幕</div><div id="currentSubtitleLabel">--</div>
+      </div>
+    </div>
+    <div class="panelBody">
+      <div class="legend">
+        <span class="chip"><span class="swatch" style="background:#7aa2ff"></span><span data-i18n="legendSelected">選択位置</span></span>
+        <span class="chip"><span class="swatch" style="background:#d2f2ff"></span><span data-i18n="legendPlayCursor">再生カーソル</span></span>
+        <span class="chip"><span class="swatch" style="background:#8bd69e"></span><span data-i18n="legendStart">開始位置</span></span>
+        <span class="chip"><span class="swatch" style="background:#ffd36d"></span><span data-i18n="legendCutSafe">実カット位置 / safe limit</span></span>
+        <span class="chip"><span class="swatch" style="background:#c59cff"></span><span data-i18n="legendFadeStart">フェード開始</span></span>
+        <span class="chip"><span class="swatch" style="background:#ff8989"></span><span data-i18n="legendEnd">終了点</span></span>
+      </div>
+      <div class="spacer"></div>
+      <div id="hint" class="status" data-i18n="mainHint" data-tip="mainHintTip">波形クリックで選択位置を移動します。再生は常に最後に選択した位置から始まり、停止すると選択位置に戻ります。マーカー付近をドラッグすると調整できます。</div>
+      <div class="spacer"></div>
+      <div class="undoRow"><button id="undoBtn" class="actionBtn icon-undo" data-i18n="undoBtn" data-tip="undoTip" disabled>元に戻す</button></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panelHead" data-i18n="startPanel" data-tip="startPanelTip">開始設定</div>
+    <div class="panelBody">
+      <label data-i18n="fadeInLabel" data-tip="fadeInTip">先頭フェードイン</label>
+      <select id="fadeInSelect" data-tip="fadeInTip">
+        <option value="0.05">50 ms</option>
+        <option value="0.10" selected>100 ms</option>
+        <option value="0.20">200 ms</option>
+      </select>
+      <div class="spacer"></div>
+      <button id="setAnchorBtn" data-i18n="setAnchorBtn" data-tip="setAnchorTip" disabled style="width:100%">現在位置を開始位置にする</button>
+      <div class="spacer"></div>
+      <div class="kv mono">
+        <div data-i18n="anchorLabelName">開始位置</div><div id="anchorLabel">--</div>
+        <div data-i18n="cutStartLabelName">実カット位置</div><div id="cutStartLabel">--</div>
+        <div data-i18n="outputMaxLabelName">出力可能長</div><div id="outputMaxLabel">--</div>
+      </div>
+    </div>
+
+    <div class="panelHead" data-i18n="endPanel" data-tip="endPanelTip">終端設定</div>
+    <div class="panelBody">
+      <label data-i18n="safeLimitLabel" data-tip="safeLimitTip">safe limit（秒）</label>
+      <input id="safeLimitInput" type="number" min="1" max="180" step="0.001" value="179.800" data-tip="safeLimitTip">
+      <div class="spacer"></div>
+      <div class="row">
+        <button id="setFadeStartBtn" data-i18n="setFadeStartBtn" data-tip="setFadeStartTip" disabled>現在位置をフェード開始</button>
+        <button id="setEndBtn" data-i18n="setEndBtn" data-tip="setEndTip" disabled>現在位置を終了点</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="kv mono">
+        <div data-i18n="fadeStartLabelName">フェード開始</div><div id="fadeStartLabel">--</div>
+        <div data-i18n="endLabelName">終了点</div><div id="endLabel">--</div>
+        <div data-i18n="fadeDurationLabelName">フェード時間</div><div id="fadeDurationLabel">--</div>
+      </div>
+    </div>
+
+    <div class="panelHead" data-i18n="terminalPanel" data-tip="terminalPanelTip">終端に重なる字幕</div>
+    <div class="panelBody">
+      <label data-i18n="terminalOriginalLabel" data-tip="terminalOriginalTip">編集前テキスト</label>
+      <div id="terminalBox" class="status" data-i18n="terminalBoxInitial" data-tip="terminalOriginalTip">開始点と終了点を決めると、終了点に重なる字幕を表示します。</div>
+      <div class="spacer"></div>
+      <label data-i18n="terminalEditLabel" data-tip="terminalEditTip">編集後テキスト</label>
+      <textarea id="terminalEdit" data-i18n-placeholder="terminalEditPlaceholder" data-tip="terminalEditTip" placeholder="そのままなら編集前テキストと同じです。空欄にすると、この字幕を出力しません。"></textarea>
+    </div>
+
+    <div class="panelHead" data-i18n="outputPanel" data-tip="outputPanelTip">出力</div>
+    <div class="panelBody">
+      <div class="footerButtons">
+        <button id="exportWavBtn" data-i18n="exportWavBtn" data-tip="exportWavTip" disabled>WAV保存</button>
+        <button id="exportSrtBtn" data-i18n="exportSrtBtn" data-tip="exportSrtTip" disabled>SRT保存</button>
+      </div>
+      <div class="spacer"></div>
+      <div id="exportStatus" class="status" data-i18n="exportStatusInitial" data-tip="exportStatusTip">出力待機中。</div>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const state = {
+    audioCtx: null,
+    audioBuffer: null,
+    audioFileName: '',
+    srtFileName: '',
+    subtitles: [],
+    selectedSubtitle: -1,
+    viewMode: 'source', // source | output
+    viewStart: 0,
+    viewEnd: 1,
+    playhead: 0, // playback cursor; source seconds in source mode, output seconds in output mode
+    selectedPlayhead: 0, // fixed replay start position in the current display mode
+    anchorSource: null,
+    fadeInSec: 0.10,
+    audioCutStart: null,
+    safeLimitSec: 179.8,
+    outputMaxSec: null,
+    fadeOutStartOut: null,
+    audioEndOut: null,
+    terminalIndex: -1,
+    terminalEditedText: '',
+    isPlaying: false,
+    sourceNode: null,
+    gainNode: null,
+    playStartCtx: 0,
+    playStartPos: 0,
+    rafId: null,
+    dragging: null,
+    history: [],
+    editSnapshotPushed: false,
+    pixelRatio: window.devicePixelRatio || 1,
+    lang: 'ja',
+  };
+
+  const els = {
+    languageSelect: $('languageSelect'), dropZone: $('dropZone'),
+    audioFile: $('audioFile'), srtFile: $('srtFile'), audioPickBtn: $('audioPickBtn'), srtPickBtn: $('srtPickBtn'), loadStatus: $('loadStatus'),
+    srtList: $('srtList'), canvas: $('waveCanvas'),
+    undoBtn: $('undoBtn'), playBtn: $('playBtn'), toStartBtn: $('toStartBtn'), zoomInBtn: $('zoomInBtn'), standardZoomBtn: $('standardZoomBtn'), zoomOutBtn: $('zoomOutBtn'), showAllBtn: $('showAllBtn'), showEndBtn: $('showEndBtn'),
+    viewModeLabel: $('viewModeLabel'), playheadLabel: $('playheadLabel'), sourceTimeLabel: $('sourceTimeLabel'), playCursorLabel: $('playCursorLabel'), currentSubtitleLabel: $('currentSubtitleLabel'),
+    fadeInSelect: $('fadeInSelect'), setAnchorBtn: $('setAnchorBtn'), anchorLabel: $('anchorLabel'), cutStartLabel: $('cutStartLabel'), outputMaxLabel: $('outputMaxLabel'),
+    safeLimitInput: $('safeLimitInput'), setFadeStartBtn: $('setFadeStartBtn'), setEndBtn: $('setEndBtn'),
+    fadeStartLabel: $('fadeStartLabel'), endLabel: $('endLabel'), fadeDurationLabel: $('fadeDurationLabel'),
+    terminalBox: $('terminalBox'), terminalEdit: $('terminalEdit'),
+    exportWavBtn: $('exportWavBtn'), exportSrtBtn: $('exportSrtBtn'), exportStatus: $('exportStatus'),
+    hint: $('hint'),
+  };
+  const ctx2d = els.canvas.getContext('2d');
+
+  const I18N = {
+    ja: {
+      appTitle: 'Music Clip & SRT Cutter for Short Movie v1.0.0',
+      appSubtitle: 'HTML5単体版。MP3/WAV + 完成済みSRTから、ショート用WAV/SRTを作成します。',
+      languageLabel: '言語／Language',
+      inputPanel: '入力とSRT', fileGroupLabel: '音源ファイル（MP3/WAV）、SRTファイル', audioFileLabel: '音源ファイル（MP3/WAV）', audioPickBtn: '音源を選択', srtFileLabel: 'SRTファイル', srtPickBtn: 'SRTを選択', dropZoneTitle: '音源とSRTをここにドロップ', dropZoneBody: 'MP3/WAVとSRTをまとめて読み込めます。新しいファイルを読むと編集状態はリセットされます。', loadStatusInitial: '音源とSRTを読み込んでください。', fileNotSelected: '選択されていません',
+      srtListPanel: 'SRT一覧', wavePanel: '波形・再生',
+      toStartBtn: '先頭へ', playBtn: '再生', stopBtn: '停止', zoomInBtn: '拡大', standardZoomBtn: '標準倍率', zoomOutBtn: '縮小', showAllBtn: '全体表示', showEndBtn: '終端へ', undoBtn: '元に戻す',
+      viewModeLabelName: '表示モード', selectedPositionLabelName: '選択位置', sourcePositionLabelName: '選択元音源位置', playCursorLabelName: '再生カーソル', currentSubtitleLabelName: '表示字幕',
+      startPanel: '開始設定', fadeInLabel: '先頭フェードイン', setAnchorBtn: '現在位置を開始位置にする', anchorLabelName: '開始位置', cutStartLabelName: '実カット位置', outputMaxLabelName: '出力可能長',
+      endPanel: '終端設定', safeLimitLabel: 'safe limit（秒）', setFadeStartBtn: '現在位置をフェード開始', setEndBtn: '現在位置を終了点', fadeStartLabelName: 'フェード開始', endLabelName: '終了点', fadeDurationLabelName: 'フェード時間',
+      terminalPanel: '終端に重なる字幕', terminalOriginalLabel: '編集前テキスト', terminalBoxInitial: '開始点と終了点を決めると、終了点に重なる字幕を表示します。', terminalEditLabel: '編集後テキスト', terminalEditPlaceholder: 'そのままなら編集前テキストと同じです。空欄にすると、この字幕を出力しません。',
+      outputPanel: '出力', exportWavBtn: 'WAV保存', exportSrtBtn: 'SRT保存', exportStatusInitial: '出力待機中。',
+      mainHint: '波形クリックで選択位置を移動します。再生は常に最後に選択した位置から始まり、停止すると選択位置に戻ります。マーカー付近をドラッグすると調整できます。',
+      legendSelected: '選択位置', legendPlayCursor: '再生カーソル', legendStart: '開始位置', legendCutSafe: '実カット位置 / safe limit', legendFadeStart: 'フェード開始', legendEnd: '終了点',
+      emptyCanvas: '音源を読み込んでください', undoDone: '元に戻しました', anchorSetStatus: '開始位置を設定しました。拡大率を維持したまま、カット後の先頭を表示しています。フェードインを確認してください。', exportSrtDone: 'SRTを書き出しました', exportWavDone: 'WAVを書き出しました',
+      unloaded: '未読込', outputTimeMode: 'ショート出力後時刻', sourceTimeMode: '元音源時刻', seconds: '秒',
+      noSrt: 'SRT未読込、または有効な字幕がありません。', loadAudioReading: '音源を読み込んでいます...', loadSrtReading: 'SRTを読み込んでいます...', audioLoaded: '音源読込完了', srtLoaded: 'SRT読込完了', lengthLabel: '長さ', subtitleCountLabel: '字幕数', droppedIgnored: '対応していないファイルは読み込みませんでした。', dropNoSupported: 'MP3/WAVまたはSRTファイルをドロップしてください。', audioLoadError: '音源の読み込みに失敗しました。ブラウザが対応するMP3/WAVか確認してください。', srtLoadError: 'SRTの読み込みに失敗しました。',
+      noTerminal: '終了点に重なる字幕はありません。', terminalRound: '出力時は終了時刻を {time} に丸めます。編集後テキストを空欄にすると、この字幕は出力しません。', terminalMultiple: '注意: 重なる字幕が{count}件あります。プロトタイプでは終端に最も近い1件を編集対象にします。',
+      appTitleTip: 'フルコーラス音源と完成済みSRTからショート動画用のWAV/SRT素材を作成するアプリです。', appSubtitleTip: 'ローカルブラウザ内で処理し、WAVとSRTを個別に保存します。', languageTip: '画面表示とヒントチップの言語を切り替えます。',
+      inputPanelTip: '音源ファイルと対応するSRTファイルを読み込みます。', fileGroupTip: '音源ファイルとSRTファイルを選択、または下の領域へドラッグ＆ドロップします。', audioFileTip: 'MP3またはWAVを選択します。1曲単位のフルコーラス音源を想定しています。', srtFileTip: '完成済みのフルコーラス用SRTを選択します。', dropZoneTip: '音源ファイルとSRTファイルを同時にドラッグ＆ドロップできます。新しいファイルを読み込むと開始・終端などの作業状態は初期化されます。', loadStatusTip: '読み込み状況とエラーを表示します。',
+      srtListTip: '字幕行をクリックすると、その行の開始時刻へ移動します。移動しても拡大率は変わりません。', wavePanelTip: '波形をクリックして選択位置を移動し、マーカーをドラッグして開始・終了を調整します。',
+      toStartTip: 'カット後の先頭へ移動します。拡大率は変えません。', playTip: '選択位置から再生します。再生中は同じボタンで停止します。', zoomInTip: '選択位置を中心に波形を拡大します。', standardZoomTip: '選択位置を中心に、開始・終端確認に使いやすい標準倍率にします。', zoomOutTip: '選択位置を中心に波形を縮小します。', showAllTip: '現在の表示範囲全体を表示します。', showEndTip: '終了点へ移動します。拡大率は変えません。', undoTip: '直前の編集操作を戻します。Ctrl+Zでも戻せます。', mainHintTip: '再生開始位置は最後に選択した位置で固定され、停止するとそこへ戻ります。',
+      startPanelTip: 'ショート音源の開始基準点と先頭フェードを設定します。', fadeInTip: '開始位置の直前からこの長さでフェードインします。クリックノイズ防止用です。', setAnchorTip: '現在の選択位置を歌い出し基準点として確定します。実カット位置はフェードイン分だけ手前になります。',
+      endPanelTip: 'フェードアウト開始点と音源の終了点を設定します。', safeLimitTip: '3分制限を超えないための実用上限です。初期値は179.800秒です。', setFadeStartTip: '現在の選択位置を、フル音量を維持する最終点として設定します。', setEndTip: '現在の選択位置を、音源が完全に終わる点として設定します。',
+      terminalPanelTip: '終了点をまたぐ字幕の出力時テキストを調整します。', terminalOriginalTip: '終了点と重なる元字幕を表示します。', terminalEditTip: '出力する最後の字幕テキストです。空欄にするとその字幕は出力しません。',
+      outputPanelTip: 'ショート用WAVとSRTを個別に保存します。', exportWavTip: '現在の開始・終了・フェード設定でWAVを保存します。', exportSrtTip: '現在の開始・終了・終端字幕設定でSRTを保存します。', exportStatusTip: '保存結果や注意事項を表示します。'
+    },
+    en: {
+      appTitle: 'Music Clip & SRT Cutter for Short Movie v1.0.0',
+      appSubtitle: 'Single-file HTML5 prototype. Create short-form WAV/SRT files from one full-length MP3/WAV and a finished SRT.',
+      languageLabel: 'Language／言語',
+      inputPanel: 'Input and SRT', fileGroupLabel: 'Audio file (MP3/WAV), SRT file', audioFileLabel: 'Audio file (MP3/WAV)', audioPickBtn: 'Choose audio', srtFileLabel: 'SRT file', srtPickBtn: 'Choose SRT', dropZoneTitle: 'Drop audio and SRT files here', dropZoneBody: 'Load MP3/WAV and SRT together. Loading new files resets the edit state.', loadStatusInitial: 'Load an audio file and an SRT file.', fileNotSelected: 'No file selected',
+      srtListPanel: 'SRT list', wavePanel: 'Waveform and playback',
+      toStartBtn: 'Start', playBtn: 'Play', stopBtn: 'Stop', zoomInBtn: 'Zoom in', standardZoomBtn: 'Standard zoom', zoomOutBtn: 'Zoom out', showAllBtn: 'Show all', showEndBtn: 'End', undoBtn: 'Undo',
+      viewModeLabelName: 'View mode', selectedPositionLabelName: 'Selected position', sourcePositionLabelName: 'Selected source position', playCursorLabelName: 'Playback cursor', currentSubtitleLabelName: 'Displayed subtitle',
+      startPanel: 'Start settings', fadeInLabel: 'Start fade-in', setAnchorBtn: 'Set selected position as start', anchorLabelName: 'Start position', cutStartLabelName: 'Actual cut position', outputMaxLabelName: 'Available output length',
+      endPanel: 'End settings', safeLimitLabel: 'Safe limit (seconds)', setFadeStartBtn: 'Set selected position as fade start', setEndBtn: 'Set selected position as end', fadeStartLabelName: 'Fade start', endLabelName: 'End point', fadeDurationLabelName: 'Fade duration',
+      terminalPanel: 'Subtitle overlapping the end', terminalOriginalLabel: 'Original text', terminalBoxInitial: 'Set the start and end points to show the subtitle overlapping the end point.', terminalEditLabel: 'Edited text', terminalEditPlaceholder: 'Leave unchanged to keep the original text. Clear this field to omit this subtitle.',
+      outputPanel: 'Export', exportWavBtn: 'Save WAV', exportSrtBtn: 'Save SRT', exportStatusInitial: 'Waiting to export.',
+      mainHint: 'Click the waveform to move the selected position. Playback always starts from the last selected position and returns there when stopped. Drag markers near the cursor to adjust them.',
+      legendSelected: 'Selected position', legendPlayCursor: 'Playback cursor', legendStart: 'Start position', legendCutSafe: 'Actual cut / safe limit', legendFadeStart: 'Fade start', legendEnd: 'End point',
+      emptyCanvas: 'Load an audio file.', undoDone: 'Undid', anchorSetStatus: 'Start position has been set. The cut-after beginning is shown without changing the zoom level. Check the fade-in.', exportSrtDone: 'SRT exported', exportWavDone: 'WAV exported',
+      unloaded: 'Not loaded', outputTimeMode: 'Short-output time', sourceTimeMode: 'Source-audio time', seconds: 'sec',
+      noSrt: 'No SRT loaded, or no valid subtitles were found.', loadAudioReading: 'Loading audio...', loadSrtReading: 'Loading SRT...', audioLoaded: 'Audio loaded', srtLoaded: 'SRT loaded', lengthLabel: 'Length', subtitleCountLabel: 'Subtitles', droppedIgnored: 'Unsupported files were ignored.', dropNoSupported: 'Drop an MP3/WAV or SRT file.', audioLoadError: 'Failed to load the audio. Check whether the browser supports this MP3/WAV file.', srtLoadError: 'Failed to load the SRT file.',
+      noTerminal: 'No subtitle overlaps the end point.', terminalRound: 'On export, the subtitle end time will be rounded to {time}. Clear the edited text to omit this subtitle.', terminalMultiple: 'Note: {count} overlapping subtitles were found. This prototype edits only the one closest to the end point.',
+      appTitleTip: 'Create short-movie WAV/SRT assets from one full-length song and a finished SRT.', appSubtitleTip: 'Runs locally in the browser and saves WAV and SRT separately.', languageTip: 'Switches the UI labels and tooltips.',
+      inputPanelTip: 'Load the audio file and its matching SRT file.', fileGroupTip: 'Choose the audio and SRT files, or drag and drop them into the area below.', audioFileTip: 'Choose an MP3 or WAV. The app assumes one full-length song.', srtFileTip: 'Choose the completed full-length SRT file.', dropZoneTip: 'Drag and drop an audio file and an SRT file together. Loading new files clears the current start/end edit state.', loadStatusTip: 'Shows loading status and errors.',
+      srtListTip: 'Click a subtitle row to move to that subtitle start time. This does not change zoom level.', wavePanelTip: 'Click the waveform to move the selected position. Drag markers to adjust start and end settings.',
+      toStartTip: 'Move to the beginning of the cut range without changing zoom.', playTip: 'Play from the selected position. During playback, this same button stops playback.', zoomInTip: 'Zoom in around the selected position.', standardZoomTip: 'Set a practical default zoom level around the selected position for checking starts and endings.', zoomOutTip: 'Zoom out around the selected position.', showAllTip: 'Show the full current timeline.', showEndTip: 'Move to the end point without changing zoom.', undoTip: 'Undo the last edit. Ctrl+Z also works.', mainHintTip: 'The replay start position is fixed at the last selected position; stopping returns to that position.',
+      startPanelTip: 'Set the short audio start anchor and the start fade-in.', fadeInTip: 'Fade in over this duration immediately before the start anchor. Used mainly to avoid clicks.', setAnchorTip: 'Use the selected position as the vocal/start anchor. The actual cut point is moved earlier by the fade-in duration.',
+      endPanelTip: 'Set the fade-out start and the final audio end point.', safeLimitTip: 'Practical duration limit to avoid exceeding three minutes. Default is 179.800 seconds.', setFadeStartTip: 'Use the selected position as the last full-volume point before fade-out.', setEndTip: 'Use the selected position as the point where the audio ends completely.',
+      terminalPanelTip: 'Adjust the text exported for the subtitle that overlaps the end point.', terminalOriginalTip: 'Shows the original subtitle overlapping the end point.', terminalEditTip: 'Text to export for the final overlapping subtitle. Clear it to omit that subtitle.',
+      outputPanelTip: 'Save the short WAV and SRT separately.', exportWavTip: 'Save the WAV using the current cut and fade settings.', exportSrtTip: 'Save the SRT using the current cut, end, and terminal subtitle settings.', exportStatusTip: 'Shows export results and warnings.'
+    }
+  };
+
+  function tr(key, vars = {}) {
+    const dict = I18N[state.lang] || I18N.ja;
+    let value = dict[key] ?? I18N.ja[key] ?? key;
+    for (const [k, v] of Object.entries(vars)) value = value.replaceAll(`{${k}}`, v);
+    return value;
+  }
+
+  function applyLanguage() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = tr(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.setAttribute('placeholder', tr(el.dataset.i18nPlaceholder));
+    });
+    document.querySelectorAll('[data-tip]').forEach(el => {
+      el.setAttribute('title', tr(el.dataset.tip));
+    });
+    updatePlaybackButtons();
+    updateLabels();
+    if (state.terminalIndex < 0 && state.audioCutStart == null) {
+      els.terminalBox.textContent = tr('terminalBoxInitial');
+    }
+    if (!state.audioBuffer && !state.subtitles.length) {
+      els.loadStatus.textContent = tr('loadStatusInitial');
+    }
+    if (state.audioCutStart == null) {
+      els.exportStatus.textContent = tr('exportStatusInitial');
+    }
+  }
+
+  function fmt(sec) {
+    if (sec == null || !isFinite(sec)) return '--';
+    const sign = sec < 0 ? '-' : '';
+    sec = Math.abs(sec);
+    let ms = Math.floor((sec % 1) * 1000 + 0.5);
+    let total = Math.floor(sec);
+    if (ms >= 1000) { ms -= 1000; total += 1; }
+    const s = total % 60; total = Math.floor(total / 60);
+    const m = total % 60; const h = Math.floor(total / 60);
+    if (h > 0) return `${sign}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
+    return `${sign}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
+  }
+
+  function fmtSrt(sec) {
+    sec = Math.max(0, sec);
+    let ms = Math.floor((sec % 1) * 1000 + 0.5);
+    let total = Math.floor(sec);
+    if (ms >= 1000) { ms -= 1000; total += 1; }
+    const s = total % 60; total = Math.floor(total / 60);
+    const m = total % 60; const h = Math.floor(total / 60);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+  }
+
+  function parseTime(t) {
+    const m = t.trim().match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})([,.](\d{1,3}))?$/);
+    if (!m) return null;
+    const h = Number(m[1]), mi = Number(m[2]), s = Number(m[3]);
+    const ms = m[5] ? Number(m[5].padEnd(3, '0')) : 0;
+    return h * 3600 + mi * 60 + s + ms / 1000;
+  }
+
+  function parseSrt(text) {
+    text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const blocks = text.split(/\n{2,}/);
+    const result = [];
+    for (const block of blocks) {
+      const lines = block.split('\n').map(l => l.trimEnd()).filter((l, i, arr) => !(i === arr.length - 1 && l.trim() === ''));
+      if (!lines.length) continue;
+      let timeLineIdx = lines.findIndex(l => l.includes('-->'));
+      if (timeLineIdx < 0) continue;
+      const parts = lines[timeLineIdx].split('-->');
+      const start = parseTime(parts[0]);
+      const end = parseTime(parts[1]);
+      if (start == null || end == null || end <= start) continue;
+      const textLines = lines.slice(timeLineIdx + 1);
+      result.push({ index: result.length + 1, start, end, text: textLines.join('\n') });
+    }
+    return result;
+  }
+
+  function baseName(name) {
+    return (name || 'output').replace(/\.[^.]+$/, '');
+  }
+
+  function setStatus(msg) { els.loadStatus.textContent = msg; }
+  function setExportStatus(msg) { els.exportStatus.textContent = msg; }
+
+
+  function resetWorkStateForNewFiles() {
+    stopPlayback(true, false);
+    state.viewMode = 'source';
+    state.viewStart = 0;
+    state.viewEnd = state.audioBuffer ? state.audioBuffer.duration : 1;
+    state.playhead = 0;
+    state.selectedPlayhead = 0;
+    state.selectedSubtitle = -1;
+    state.anchorSource = null;
+    state.audioCutStart = null;
+    state.outputMaxSec = null;
+    state.fadeOutStartOut = null;
+    state.audioEndOut = null;
+    state.terminalIndex = -1;
+    state.terminalEditedText = '';
+    state.history = [];
+    state.editSnapshotPushed = false;
+    if (els.terminalEdit) { els.terminalEdit.value = ''; delete els.terminalEdit.dataset.lastIndex; }
+    updateUndoButton();
+    updateTerminal();
+    setExportStatus(tr('exportStatusInitial'));
+  }
+
+  function makeSnapshot(label) {
+    return {
+      label,
+      selectedSubtitle: state.selectedSubtitle,
+      viewMode: state.viewMode,
+      viewStart: state.viewStart,
+      viewEnd: state.viewEnd,
+      playhead: state.playhead,
+      selectedPlayhead: state.selectedPlayhead,
+      anchorSource: state.anchorSource,
+      fadeInSec: state.fadeInSec,
+      audioCutStart: state.audioCutStart,
+      safeLimitSec: state.safeLimitSec,
+      outputMaxSec: state.outputMaxSec,
+      fadeOutStartOut: state.fadeOutStartOut,
+      audioEndOut: state.audioEndOut,
+      terminalIndex: state.terminalIndex,
+      terminalEditedText: state.terminalEditedText,
+      terminalEditValue: els.terminalEdit.value,
+      safeLimitInputValue: els.safeLimitInput.value,
+      fadeInSelectValue: els.fadeInSelect.value,
+    };
+  }
+
+  function pushUndo(label) {
+    if (!state.audioBuffer && !state.subtitles.length) return;
+    const snap = makeSnapshot(label);
+    const last = state.history[state.history.length - 1];
+    const body = JSON.stringify(snap);
+    if (last && JSON.stringify(last) === body) return;
+    state.history.push(snap);
+    if (state.history.length > 80) state.history.shift();
+    updateUndoButton();
+  }
+
+  function updateUndoButton() {
+    if (els.undoBtn) els.undoBtn.disabled = state.history.length === 0;
+  }
+
+  function undo() {
+    const snap = state.history.pop();
+    if (!snap) return;
+    stopPlayback(true, false);
+    Object.assign(state, {
+      selectedSubtitle: snap.selectedSubtitle,
+      viewMode: snap.viewMode,
+      viewStart: snap.viewStart,
+      viewEnd: snap.viewEnd,
+      playhead: snap.playhead,
+      selectedPlayhead: snap.selectedPlayhead,
+      anchorSource: snap.anchorSource,
+      fadeInSec: snap.fadeInSec,
+      audioCutStart: snap.audioCutStart,
+      safeLimitSec: snap.safeLimitSec,
+      outputMaxSec: snap.outputMaxSec,
+      fadeOutStartOut: snap.fadeOutStartOut,
+      audioEndOut: snap.audioEndOut,
+      terminalIndex: snap.terminalIndex,
+      terminalEditedText: snap.terminalEditedText,
+    });
+    els.safeLimitInput.value = snap.safeLimitInputValue ?? state.safeLimitSec.toFixed(3);
+    els.fadeInSelect.value = snap.fadeInSelectValue ?? String(state.fadeInSec.toFixed(2));
+    els.terminalEdit.value = snap.terminalEditValue ?? state.terminalEditedText ?? '';
+    state.editSnapshotPushed = false;
+    renderSrtList(true);
+    updateTerminal();
+    enableBasicControls();
+    updateUndoButton();
+    updateLabels();
+    draw();
+    setExportStatus(`${tr('undoDone')}: ${snap.label || 'operation'}`);
+  }
+
+  function setSelectedPlayhead(t, { syncSubtitle = true, addUndo = true, label = '選択位置変更' } = {}) {
+    if (!state.audioBuffer) return;
+    if (addUndo) pushUndo(label);
+    stopPlayback(true, false);
+    const max = state.viewMode === 'output' ? getOutputDuration() : state.audioBuffer.duration;
+    let next = clamp(t, 0, max);
+    if (state.viewMode === 'output' && state.audioEndOut != null) next = clamp(next, 0, state.audioEndOut);
+    state.selectedPlayhead = next;
+    state.playhead = next;
+    if (syncSubtitle) selectSubtitleByDisplayTime(next);
+    updateLabels();
+    draw();
+  }
+
+  async function ensureAudioCtx() {
+    if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
+    return state.audioCtx;
+  }
+
+  async function loadAudioFile(file, { appendStatus = false } = {}) {
+    try {
+      setStatus(appendStatus ? `${els.loadStatus.textContent}
+${tr('loadAudioReading')}` : tr('loadAudioReading'));
+      const arrayBuffer = await file.arrayBuffer();
+      const audioCtx = await ensureAudioCtx();
+      const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      state.audioBuffer = decoded;
+      state.audioFileName = file.name;
+        resetWorkStateForNewFiles();
+      setStatus(`${tr('audioLoaded')}: ${file.name}
+${tr('lengthLabel')}: ${fmt(decoded.duration)} / ${decoded.sampleRate} Hz / ${decoded.numberOfChannels} ch`);
+      enableBasicControls();
+      renderSrtList(true);
+      draw(); updateLabels();
+    } catch (err) {
+      console.error(err);
+      setStatus(tr('audioLoadError'));
+    }
+  }
+
+  async function loadSrtFile(file, { appendStatus = true } = {}) {
+    try {
+      const prefix = appendStatus ? els.loadStatus.textContent : '';
+      if (!appendStatus) setStatus(tr('loadSrtReading'));
+      const text = await file.text();
+      state.subtitles = parseSrt(text);
+      state.srtFileName = file.name;
+        resetWorkStateForNewFiles();
+      renderSrtList();
+      updateTerminal();
+      const msg = `${tr('srtLoaded')}: ${file.name}
+${tr('subtitleCountLabel')}: ${state.subtitles.length}`;
+      setStatus(prefix ? `${prefix}
+${msg}` : msg);
+      enableBasicControls();
+      draw(); updateLabels();
+    } catch (err) {
+      console.error(err);
+      setStatus(tr('srtLoadError'));
+    }
+  }
+
+
+  function enableBasicControls() {
+    const hasAudio = !!state.audioBuffer;
+    els.playBtn.disabled = !hasAudio;
+    els.toStartBtn.disabled = !hasAudio;
+    els.zoomInBtn.disabled = !hasAudio;
+    els.standardZoomBtn.disabled = !hasAudio;
+    els.zoomOutBtn.disabled = !hasAudio;
+    els.showAllBtn.disabled = !hasAudio;
+    els.setAnchorBtn.disabled = !hasAudio;
+    const hasOutput = hasAudio && state.audioCutStart != null;
+    els.showEndBtn.disabled = !hasOutput;
+    els.setFadeStartBtn.disabled = !hasOutput;
+    els.setEndBtn.disabled = !hasOutput;
+    els.exportWavBtn.disabled = !hasOutput;
+    els.exportSrtBtn.disabled = !hasOutput || state.subtitles.length === 0;
+  }
+
+  function renderSrtList(scrollActive = false) {
+    els.srtList.innerHTML = '';
+    if (!state.subtitles.length) {
+      els.srtList.innerHTML = `<div class="panelBody small">${tr('noSrt')}</div>`;
+      return;
+    }
+    state.subtitles.forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'srtItem' + (i === state.selectedSubtitle ? ' active' : '');
+      div.innerHTML = `<div class="srtTime mono">${i + 1}. ${fmt(s.start)} → ${fmt(s.end)}</div><div class="srtText"></div>`;
+      div.querySelector('.srtText').textContent = s.text;
+      div.addEventListener('click', () => {
+        pushUndo('SRT行選択');
+        state.selectedSubtitle = i;
+        renderSrtList(true);
+        seekToSubtitle(s, false);
+      });
+      els.srtList.appendChild(div);
+    });
+    if (scrollActive && state.selectedSubtitle >= 0) {
+      const active = els.srtList.querySelector('.srtItem.active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function seekToSubtitle(sub, addUndo = true) {
+    if (!state.audioBuffer) return;
+    let target;
+    if (state.viewMode === 'output' && state.audioCutStart != null) {
+      target = clamp(sub.start - state.audioCutStart, 0, getOutputDuration());
+    } else {
+      target = clamp(sub.start, 0, state.audioBuffer.duration);
+    }
+    setSelectedPlayhead(target, { syncSubtitle: false, addUndo, label: 'SRT行移動' });
+    centerView(target, Math.max(0.2, state.viewEnd - state.viewStart));
+    draw(); updateLabels();
+  }
+
+  function subtitleIndexAtDisplayTime(t) {
+    if (!state.subtitles.length) return -1;
+    let chosen = -1;
+    for (let i = 0; i < state.subtitles.length; i++) {
+      const s = state.subtitles[i];
+      const start = state.viewMode === 'output' && state.audioCutStart != null ? Math.max(0, s.start - state.audioCutStart) : s.start;
+      const end = state.viewMode === 'output' && state.audioCutStart != null ? s.end - state.audioCutStart : s.end;
+      if (start <= t && t < end) return i;
+      if (start <= t) chosen = i;
+    }
+    if (chosen < 0 && state.subtitles.length) chosen = 0;
+    return chosen;
+  }
+
+  function selectSubtitleByDisplayTime(t) {
+    const chosen = subtitleIndexAtDisplayTime(t);
+    if (chosen !== state.selectedSubtitle) {
+      state.selectedSubtitle = chosen;
+      renderSrtList(true);
+    }
+    updateCurrentSubtitleLabel(t);
+  }
+
+  function updateCurrentSubtitleLabel(t) {
+    if (!els.currentSubtitleLabel) return;
+    const idx = subtitleIndexAtDisplayTime(t);
+    if (idx >= 0 && state.subtitles[idx]) {
+      els.currentSubtitleLabel.textContent = state.subtitles[idx].text.replace(/\n/g, ' / ');
+    } else {
+      els.currentSubtitleLabel.textContent = '--';
+    }
+  }
+
+  function sourceFromDisplay(t) {
+    return state.viewMode === 'output' && state.audioCutStart != null ? state.audioCutStart + t : t;
+  }
+
+  function displayFromSource(t) {
+    return state.viewMode === 'output' && state.audioCutStart != null ? t - state.audioCutStart : t;
+  }
+
+  function getDisplayMax() {
+    if (!state.audioBuffer) return 1;
+    if (state.viewMode === 'output' && state.audioCutStart != null) return getOutputDuration();
+    return state.audioBuffer.duration;
+  }
+
+  function getOutputDuration() {
+    if (state.audioEndOut != null) return state.audioEndOut;
+    if (state.outputMaxSec != null) return state.outputMaxSec;
+    return 0;
+  }
+
+  function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+
+  function centerView(center, span) {
+    const max = getDisplayMax();
+    span = Math.min(max || span, span);
+    state.viewStart = clamp(center - span / 2, 0, Math.max(0, max - span));
+    state.viewEnd = Math.min(max, state.viewStart + span);
+    if (state.viewEnd - state.viewStart < span && state.viewStart > 0) state.viewStart = Math.max(0, state.viewEnd - span);
+  }
+
+  function setFullView() {
+    const max = getDisplayMax();
+    state.viewStart = 0;
+    state.viewEnd = Math.max(0.001, max);
+    draw(); updateLabels();
+  }
+
+  function zoom(factor) {
+    const center = state.selectedPlayhead;
+    const span = (state.viewEnd - state.viewStart) * factor;
+    centerView(center, Math.max(0.2, span));
+    draw();
+  }
+
+  function setStandardZoom() {
+    if (!state.audioBuffer) return;
+    const max = getDisplayMax();
+    const span = Math.min(max || 10, 10);
+    centerView(state.selectedPlayhead, Math.max(0.2, span));
+    draw();
+    updateLabels();
+  }
+
+  function setAnchorHere() {
+    if (!state.audioBuffer) return;
+    pushUndo('開始基準点設定');
+    const source = clamp(sourceFromDisplay(state.selectedPlayhead), 0, state.audioBuffer.duration);
+    const oldSpan = Math.max(0.2, state.viewEnd - state.viewStart);
+    state.anchorSource = source;
+    state.fadeInSec = Number(els.fadeInSelect.value || 0.1);
+    state.audioCutStart = Math.max(0, state.anchorSource - state.fadeInSec);
+    state.safeLimitSec = Number(els.safeLimitInput.value || 179.8);
+    const remaining = Math.max(0.001, state.audioBuffer.duration - state.audioCutStart);
+    state.outputMaxSec = Math.min(state.safeLimitSec, remaining);
+    state.viewMode = 'output';
+    state.selectedPlayhead = 0;
+    state.playhead = 0;
+    state.audioEndOut = state.outputMaxSec;
+    state.fadeOutStartOut = Math.max(0, state.audioEndOut - 3.0);
+    state.viewStart = 0;
+    state.viewEnd = Math.min(state.outputMaxSec, oldSpan);
+    updateTerminal();
+    enableBasicControls();
+    selectSubtitleByDisplayTime(0);
+    draw();
+    updateLabels();
+    setExportStatus(tr('anchorSetStatus'));
+  }
+
+  function updateSafeLimit() {
+    pushUndo('safe limit変更');
+    state.safeLimitSec = clamp(Number(els.safeLimitInput.value || 179.8), 1, 180);
+    els.safeLimitInput.value = state.safeLimitSec.toFixed(3);
+    if (state.audioBuffer && state.audioCutStart != null) {
+      const remaining = Math.max(0.001, state.audioBuffer.duration - state.audioCutStart);
+      const oldMax = state.outputMaxSec;
+      state.outputMaxSec = Math.min(state.safeLimitSec, remaining);
+      if (state.audioEndOut == null || state.audioEndOut > state.outputMaxSec || Math.abs(state.audioEndOut - oldMax) < 0.001) {
+        state.audioEndOut = state.outputMaxSec;
+      }
+      state.fadeOutStartOut = clamp(state.fadeOutStartOut ?? Math.max(0, state.audioEndOut - 3), 0, Math.max(0, state.audioEndOut - 0.01));
+      state.selectedPlayhead = clamp(state.selectedPlayhead, 0, getOutputDuration());
+      state.playhead = state.selectedPlayhead;
+      state.viewEnd = Math.min(state.viewEnd, getDisplayMax());
+      if (state.viewStart >= state.viewEnd) state.viewStart = Math.max(0, state.viewEnd - 10);
+      updateTerminal();
+    }
+    updateLabels(); draw();
+  }
+
+  function setEndHere() {
+    if (state.viewMode !== 'output') return;
+    pushUndo('終了点設定');
+    state.audioEndOut = clamp(state.selectedPlayhead, 0.05, state.outputMaxSec);
+    if (state.fadeOutStartOut == null || state.fadeOutStartOut >= state.audioEndOut) {
+      state.fadeOutStartOut = Math.max(0, state.audioEndOut - 3);
+    }
+    state.fadeOutStartOut = clamp(state.fadeOutStartOut, 0, Math.max(0, state.audioEndOut - 0.01));
+    state.selectedPlayhead = Math.min(state.selectedPlayhead, state.audioEndOut);
+    state.playhead = state.selectedPlayhead;
+    updateTerminal(); draw(); updateLabels();
+  }
+
+  function setFadeStartHere() {
+    if (state.viewMode !== 'output' || state.audioEndOut == null) return;
+    pushUndo('フェード開始設定');
+    state.fadeOutStartOut = clamp(state.selectedPlayhead, 0, Math.max(0, state.audioEndOut - 0.01));
+    draw(); updateLabels();
+  }
+
+  function updateLabels() {
+    const hasAudio = !!state.audioBuffer;
+    els.viewModeLabel.textContent = !hasAudio ? tr('unloaded') : (state.viewMode === 'output' ? tr('outputTimeMode') : tr('sourceTimeMode'));
+    els.playheadLabel.textContent = hasAudio ? fmt(state.selectedPlayhead) : '--';
+    els.sourceTimeLabel.textContent = hasAudio ? fmt(sourceFromDisplay(state.selectedPlayhead)) : '--';
+    els.playCursorLabel.textContent = hasAudio && state.isPlaying ? fmt(state.playhead) : '--';
+    els.anchorLabel.textContent = state.anchorSource != null ? fmt(state.anchorSource) : '--';
+    els.cutStartLabel.textContent = state.audioCutStart != null ? fmt(state.audioCutStart) : '--';
+    els.outputMaxLabel.textContent = state.outputMaxSec != null ? `${fmt(state.outputMaxSec)} (safe limit ${state.safeLimitSec.toFixed(3)} ${tr('seconds')})` : '--';
+    els.fadeStartLabel.textContent = state.fadeOutStartOut != null ? fmt(state.fadeOutStartOut) : '--';
+    els.endLabel.textContent = state.audioEndOut != null ? fmt(state.audioEndOut) : '--';
+    els.fadeDurationLabel.textContent = state.audioEndOut != null && state.fadeOutStartOut != null ? `${(state.audioEndOut - state.fadeOutStartOut).toFixed(3)} ${tr('seconds')}` : '--';
+    updateCurrentSubtitleLabel(state.isPlaying ? state.playhead : state.selectedPlayhead);
+  }
+
+  function resizeCanvas() {
+    const rect = els.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    state.pixelRatio = dpr;
+    els.canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    els.canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    draw();
+  }
+
+  function timeToX(t, w) {
+    return ((t - state.viewStart) / (state.viewEnd - state.viewStart)) * w;
+  }
+
+  function xToTime(x, w) {
+    return state.viewStart + (x / w) * (state.viewEnd - state.viewStart);
+  }
+
+  function draw() {
+    const canvas = els.canvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx2d.clearRect(0, 0, w, h);
+    ctx2d.fillStyle = '#0d1016';
+    ctx2d.fillRect(0, 0, w, h);
+    if (!state.audioBuffer) {
+      ctx2d.fillStyle = '#9ba3b4';
+      ctx2d.font = `${14 * state.pixelRatio}px system-ui`;
+      ctx2d.fillText(tr('emptyCanvas'), 20 * state.pixelRatio, 40 * state.pixelRatio);
+      return;
+    }
+    drawGrid(w, h);
+    drawWave(w, h);
+    drawSubtitleRegions(w, h);
+    drawFadeRegions(w, h);
+    drawMarkers(w, h);
+  }
+
+  function drawGrid(w, h) {
+    const span = state.viewEnd - state.viewStart;
+    const targetTicks = 8;
+    const rawStep = span / targetTicks;
+    const steps = [0.1,0.2,0.5,1,2,5,10,15,30,60,120];
+    const step = steps.find(s => s >= rawStep) || 300;
+    const first = Math.ceil(state.viewStart / step) * step;
+    ctx2d.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx2d.fillStyle = '#9ba3b4';
+    ctx2d.font = `${11 * state.pixelRatio}px ui-monospace, monospace`;
+    ctx2d.textBaseline = 'top';
+    for (let t = first; t <= state.viewEnd + 1e-6; t += step) {
+      const x = timeToX(t, w);
+      ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+      ctx2d.fillText(fmt(t), x + 4 * state.pixelRatio, 4 * state.pixelRatio);
+    }
+    ctx2d.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx2d.beginPath(); ctx2d.moveTo(0, h/2); ctx2d.lineTo(w, h/2); ctx2d.stroke();
+  }
+
+  function drawWave(w, h) {
+    const buffer = state.audioBuffer;
+    const ch0 = buffer.getChannelData(0);
+    const sr = buffer.sampleRate;
+    const mid = h / 2;
+    const amp = h * 0.38;
+    ctx2d.strokeStyle = '#d2d7e6';
+    ctx2d.lineWidth = Math.max(1, state.pixelRatio);
+    ctx2d.beginPath();
+    for (let x = 0; x < w; x += Math.max(1, state.pixelRatio)) {
+      const t0 = xToTime(x, w);
+      const t1 = xToTime(x + Math.max(1, state.pixelRatio), w);
+      const s0 = Math.max(0, Math.floor(sourceFromDisplay(t0) * sr));
+      const s1 = Math.min(ch0.length, Math.max(s0 + 1, Math.floor(sourceFromDisplay(t1) * sr)));
+      let min = 1, max = -1;
+      const step = Math.max(1, Math.floor((s1 - s0) / 80));
+      for (let i = s0; i < s1; i += step) {
+        const v = ch0[i] || 0;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+      const y1 = mid - max * amp;
+      const y2 = mid - min * amp;
+      ctx2d.moveTo(x, y1); ctx2d.lineTo(x, y2);
+    }
+    ctx2d.stroke();
+  }
+
+  function drawSubtitleRegions(w, h) {
+    if (!state.subtitles.length) return;
+    ctx2d.save();
+    ctx2d.globalAlpha = 0.12;
+    ctx2d.fillStyle = '#7aa2ff';
+    for (const s of state.subtitles) {
+      const start = displayFromSource(s.start);
+      const end = displayFromSource(s.end);
+      if (end < state.viewStart || start > state.viewEnd) continue;
+      const x1 = timeToX(Math.max(start, state.viewStart), w);
+      const x2 = timeToX(Math.min(end, state.viewEnd), w);
+      ctx2d.fillRect(x1, h - 28 * state.pixelRatio, Math.max(1, x2 - x1), 18 * state.pixelRatio);
+    }
+    ctx2d.restore();
+  }
+
+  function drawLine(t, color, label, w, h, dash=false) {
+    if (t == null || t < state.viewStart || t > state.viewEnd) return;
+    const x = timeToX(t, w);
+    ctx2d.save();
+    ctx2d.strokeStyle = color;
+    ctx2d.lineWidth = 2 * state.pixelRatio;
+    if (dash) ctx2d.setLineDash([6 * state.pixelRatio, 5 * state.pixelRatio]);
+    ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+    ctx2d.setLineDash([]);
+    ctx2d.fillStyle = color;
+    ctx2d.font = `${11 * state.pixelRatio}px system-ui`;
+    ctx2d.textBaseline = 'bottom';
+    ctx2d.fillText(label, x + 4 * state.pixelRatio, h - 6 * state.pixelRatio);
+    ctx2d.restore();
+  }
+
+  function drawFadeRegions(w, h) {
+    if (!state.audioBuffer) return;
+    ctx2d.save();
+    if (state.viewMode === 'output' && state.audioCutStart != null) {
+      // Fade-in band: output 0 to fade-in end.
+      const fiStart = 0;
+      const fiEnd = Math.min(state.fadeInSec || 0, getDisplayMax());
+      if (fiEnd > state.viewStart && fiStart < state.viewEnd) {
+        const x1 = timeToX(Math.max(fiStart, state.viewStart), w);
+        const x2 = timeToX(Math.min(fiEnd, state.viewEnd), w);
+        ctx2d.fillStyle = 'rgba(139,214,158,.16)';
+        ctx2d.fillRect(x1, 0, Math.max(1, x2 - x1), h);
+        ctx2d.fillStyle = 'rgba(139,214,158,.85)';
+        ctx2d.font = `${11 * state.pixelRatio}px system-ui`;
+        ctx2d.fillText(state.lang === 'en' ? 'fade in' : 'フェードイン', x1 + 5 * state.pixelRatio, 22 * state.pixelRatio);
+      }
+      // Fade-out band.
+      if (state.fadeOutStartOut != null && state.audioEndOut != null) {
+        const foStart = state.fadeOutStartOut;
+        const foEnd = state.audioEndOut;
+        if (foEnd > state.viewStart && foStart < state.viewEnd) {
+          const x1 = timeToX(Math.max(foStart, state.viewStart), w);
+          const x2 = timeToX(Math.min(foEnd, state.viewEnd), w);
+          ctx2d.fillStyle = 'rgba(197,156,255,.17)';
+          ctx2d.fillRect(x1, 0, Math.max(1, x2 - x1), h);
+          ctx2d.fillStyle = 'rgba(197,156,255,.9)';
+          ctx2d.font = `${11 * state.pixelRatio}px system-ui`;
+          ctx2d.fillText(state.lang === 'en' ? 'fade out' : 'フェードアウト', x1 + 5 * state.pixelRatio, 40 * state.pixelRatio);
+        }
+      }
+    } else if (state.anchorSource != null && state.audioCutStart != null) {
+      // Source-view preview of the future fade-in band.
+      const x1 = timeToX(Math.max(state.audioCutStart, state.viewStart), w);
+      const x2 = timeToX(Math.min(state.anchorSource, state.viewEnd), w);
+      if (x2 > x1) {
+        ctx2d.fillStyle = 'rgba(139,214,158,.16)';
+        ctx2d.fillRect(x1, 0, Math.max(1, x2 - x1), h);
+      }
+    }
+    ctx2d.restore();
+  }
+
+  function drawMarkers(w, h) {
+    if (state.viewMode === 'source') {
+      drawLine(state.selectedPlayhead, '#7aa2ff', state.lang === 'en' ? 'selected' : '選択', w, h);
+      if (state.isPlaying) drawLine(state.playhead, '#d2f2ff', state.lang === 'en' ? 'play' : '再生', w, h, true);
+      if (state.anchorSource != null) drawLine(state.anchorSource, '#8bd69e', state.lang === 'en' ? 'start' : '開始', w, h);
+      if (state.audioCutStart != null) drawLine(state.audioCutStart, '#ffd36d', 'cut', w, h, true);
+      return;
+    }
+    drawLine(state.selectedPlayhead, '#7aa2ff', state.lang === 'en' ? 'selected' : '選択', w, h);
+    if (state.isPlaying) drawLine(state.playhead, '#d2f2ff', state.lang === 'en' ? 'play' : '再生', w, h, true);
+    const anchorOut = state.anchorSource != null && state.audioCutStart != null ? state.anchorSource - state.audioCutStart : null;
+    drawLine(0, '#ffd36d', 'cut', w, h, true);
+    drawLine(anchorOut, '#8bd69e', state.lang === 'en' ? 'start' : '開始', w, h);
+    drawLine(state.safeLimitSec, '#ffd36d', 'safe', w, h, true);
+    drawLine(state.fadeOutStartOut, '#c59cff', 'fade', w, h);
+    drawLine(state.audioEndOut, '#ff8989', 'end', w, h);
+  }
+
+  function nearestMarker(t, px, w) {
+    const maxDist = 10 * state.pixelRatio;
+    const candidates = [];
+    if (state.viewMode === 'source') {
+      if (state.anchorSource != null) candidates.push(['anchorSource', state.anchorSource]);
+    } else {
+      candidates.push(['fadeOutStartOut', state.fadeOutStartOut]);
+      candidates.push(['audioEndOut', state.audioEndOut]);
+    }
+    let best = null;
+    for (const [name, mt] of candidates) {
+      if (mt == null) continue;
+      const mx = timeToX(mt, w);
+      const d = Math.abs(mx - px);
+      if (d <= maxDist && (!best || d < best.d)) best = { name, d };
+    }
+    return best ? best.name : null;
+  }
+
+  function pointerTime(ev) {
+    const rect = els.canvas.getBoundingClientRect();
+    const xCss = ev.clientX - rect.left;
+    const x = xCss * state.pixelRatio;
+    return { t: xToTime(x, els.canvas.width), x };
+  }
+
+  function onCanvasDown(ev) {
+    if (!state.audioBuffer) return;
+    const { t, x } = pointerTime(ev);
+    const marker = nearestMarker(t, x, els.canvas.width);
+    if (marker) {
+      pushUndo('マーカー移動');
+      stopPlayback(true, false);
+      state.dragging = marker;
+    } else {
+      setSelectedPlayhead(t, { syncSubtitle: true, addUndo: true, label: '波形クリック' });
+    }
+  }
+
+  function onCanvasMove(ev) {
+    if (!state.dragging || !state.audioBuffer) return;
+    const { t } = pointerTime(ev);
+    if (state.dragging === 'anchorSource') {
+      state.anchorSource = clamp(t, 0, state.audioBuffer.duration);
+      state.audioCutStart = Math.max(0, state.anchorSource - state.fadeInSec);
+    } else if (state.dragging === 'audioEndOut') {
+      state.audioEndOut = clamp(t, 0.05, state.outputMaxSec);
+      if (state.fadeOutStartOut >= state.audioEndOut) state.fadeOutStartOut = Math.max(0, state.audioEndOut - 0.05);
+      state.selectedPlayhead = Math.min(state.selectedPlayhead, state.audioEndOut);
+      state.playhead = state.selectedPlayhead;
+      updateTerminal();
+    } else if (state.dragging === 'fadeOutStartOut') {
+      state.fadeOutStartOut = clamp(t, 0, Math.max(0, state.audioEndOut - 0.01));
+    }
+    updateLabels(); draw();
+  }
+
+  function onCanvasUp() { state.dragging = null; }
+
+  async function play() {
+    if (!state.audioBuffer) return;
+    if (state.isPlaying) {
+      stopPlayback(true, true);
+      return;
+    }
+    await ensureAudioCtx();
+    stopPlayback(false, false);
+    const ctx = state.audioCtx;
+    const source = ctx.createBufferSource();
+    source.buffer = state.audioBuffer;
+    const gain = ctx.createGain();
+    source.connect(gain).connect(ctx.destination);
+    const now = ctx.currentTime;
+    let sourceOffset, duration;
+    if (state.viewMode === 'output' && state.audioCutStart != null) {
+      const outPos = clamp(state.selectedPlayhead, 0, getOutputDuration());
+      state.playhead = outPos;
+      sourceOffset = state.audioCutStart + outPos;
+      duration = Math.max(0, getOutputDuration() - outPos);
+      scheduleGain(gain.gain, now, outPos, duration);
+      state.playStartPos = outPos;
+    } else {
+      const srcPos = clamp(state.selectedPlayhead, 0, state.audioBuffer.duration);
+      state.playhead = srcPos;
+      sourceOffset = srcPos;
+      duration = Math.max(0, state.audioBuffer.duration - sourceOffset);
+      gain.gain.setValueAtTime(1, now);
+      state.playStartPos = srcPos;
+    }
+    if (duration <= 0) return;
+    state.sourceNode = source;
+    state.gainNode = gain;
+    state.isPlaying = true;
+    state.playStartCtx = now;
+    source.onended = () => stopPlayback(true, true);
+    source.start(0, sourceOffset, duration);
+    updatePlaybackButtons();
+    tickPlayback();
+  }
+
+  function gainAt(outSec) {
+    let g = 1;
+    if (state.fadeInSec > 0 && outSec < state.fadeInSec) {
+      g *= clamp(outSec / state.fadeInSec, 0, 1);
+    }
+    if (state.fadeOutStartOut != null && state.audioEndOut != null && outSec >= state.fadeOutStartOut) {
+      const dur = Math.max(0.001, state.audioEndOut - state.fadeOutStartOut);
+      g *= clamp((state.audioEndOut - outSec) / dur, 0, 1);
+    }
+    return g;
+  }
+
+  function scheduleGain(param, now, outPos, duration) {
+    const endOut = state.audioEndOut ?? (outPos + duration);
+    const fadeStart = state.fadeOutStartOut ?? endOut;
+    param.cancelScheduledValues(now);
+    param.setValueAtTime(gainAt(outPos), now);
+    if (state.fadeInSec > outPos) {
+      param.linearRampToValueAtTime(1, now + (state.fadeInSec - outPos));
+    }
+    if (fadeStart >= outPos && fadeStart <= endOut) {
+      param.setValueAtTime(1, now + Math.max(0, fadeStart - outPos));
+      param.linearRampToValueAtTime(0, now + Math.max(0, endOut - outPos));
+    } else if (outPos > fadeStart && outPos < endOut) {
+      param.linearRampToValueAtTime(0, now + Math.max(0, endOut - outPos));
+    }
+  }
+
+  function stopPlayback(resetButton=true, restoreSelection=true) {
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = null;
+    if (state.sourceNode) {
+      try { state.sourceNode.onended = null; state.sourceNode.stop(); } catch (_) {}
+      try { state.sourceNode.disconnect(); } catch (_) {}
+    }
+    if (state.gainNode) {
+      try { state.gainNode.disconnect(); } catch (_) {}
+    }
+    state.sourceNode = null;
+    state.gainNode = null;
+    state.isPlaying = false;
+    if (restoreSelection) {
+      state.playhead = state.selectedPlayhead;
+      selectSubtitleByDisplayTime(state.selectedPlayhead);
+    }
+    if (resetButton) updatePlaybackButtons();
+    updateLabels();
+    draw();
+  }
+
+  function tickPlayback() {
+    if (!state.isPlaying || !state.audioCtx) return;
+    const elapsed = state.audioCtx.currentTime - state.playStartCtx;
+    state.playhead = state.playStartPos + elapsed;
+    const max = state.viewMode === 'output' ? getOutputDuration() : state.audioBuffer.duration;
+    if (state.playhead >= max) {
+      state.playhead = max;
+      stopPlayback();
+    } else {
+      selectSubtitleByDisplayTime(state.playhead);
+      state.rafId = requestAnimationFrame(tickPlayback);
+    }
+    updateLabels(); draw();
+  }
+
+  function updatePlaybackButtons() {
+    els.playBtn.textContent = state.isPlaying ? tr('stopBtn') : tr('playBtn');
+    els.playBtn.classList.toggle('icon-play', !state.isPlaying);
+    els.playBtn.classList.toggle('icon-stop', state.isPlaying);
+  }
+
+  function updateTerminal() {
+    state.terminalIndex = -1;
+    if (!state.subtitles.length || state.audioCutStart == null || state.audioEndOut == null) {
+      els.terminalBox.textContent = tr('terminalBoxInitial');
+      els.terminalEdit.value = state.terminalEditedText || '';
+      delete els.terminalEdit.dataset.lastIndex;
+      return;
+    }
+    const outputDuration = state.audioEndOut;
+    const candidates = [];
+    for (let i = 0; i < state.subtitles.length; i++) {
+      const s = state.subtitles[i];
+      const start = s.start - state.audioCutStart;
+      const end = s.end - state.audioCutStart;
+      if (start < outputDuration && end > outputDuration) candidates.push({ i, s, start, end });
+    }
+    if (!candidates.length) {
+      els.terminalBox.textContent = tr('noTerminal');
+      els.terminalEdit.value = '';
+      state.terminalEditedText = '';
+      delete els.terminalEdit.dataset.lastIndex;
+      return;
+    }
+    const chosen = candidates.reduce((a, b) => b.start > a.start ? b : a, candidates[0]);
+    state.terminalIndex = chosen.i;
+    if (els.terminalEdit.dataset.lastIndex !== String(chosen.i)) {
+      state.terminalEditedText = chosen.s.text;
+      els.terminalEdit.value = chosen.s.text;
+      els.terminalEdit.dataset.lastIndex = String(chosen.i);
+    }
+    const extra = candidates.length > 1 ? `\n${tr('terminalMultiple', { count: candidates.length })}` : '';
+    els.terminalBox.textContent = `${fmt(chosen.start)} → ${fmt(chosen.end)}\n${chosen.s.text}\n\n${tr('terminalRound', { time: fmt(outputDuration) })}${extra}`;
+  }
+
+  function buildOutputSubtitles() {
+    if (state.audioCutStart == null || state.audioEndOut == null) return [];
+    const out = [];
+    const duration = state.audioEndOut;
+    for (let i = 0; i < state.subtitles.length; i++) {
+      const s = state.subtitles[i];
+      let start = s.start - state.audioCutStart;
+      let end = s.end - state.audioCutStart;
+      if (end <= 0) continue;
+      if (start >= duration) continue;
+      let text = s.text;
+      const overlapsEnd = start < duration && end > duration;
+      if (overlapsEnd && i === state.terminalIndex) {
+        text = state.terminalEditedText;
+        if (!text || !text.trim()) continue;
+        end = duration;
+      } else if (end > duration) {
+        end = duration;
+      }
+      start = Math.max(0, start);
+      if (end <= start) continue;
+      if (!text || !text.trim()) continue;
+      out.push({ start, end, text });
+    }
+    return out;
+  }
+
+  function makeSrtText(items) {
+    return items.map((s, i) => `${i + 1}\n${fmtSrt(s.start)} --> ${fmtSrt(s.end)}\n${s.text}`).join('\n\n') + '\n';
+  }
+
+  function downloadBlob(blob, name) {
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  function exportSrt() {
+    if (state.audioCutStart == null || !state.subtitles.length) return;
+    state.terminalEditedText = els.terminalEdit.value;
+    const items = buildOutputSubtitles();
+    const text = makeSrtText(items);
+    const name = `${baseName(state.srtFileName || state.audioFileName)}_short.srt`;
+    downloadBlob(new Blob([text], { type: 'text/plain;charset=utf-8' }), name);
+    setExportStatus(`${tr('exportSrtDone')}: ${name}\n${tr('subtitleCountLabel')}: ${items.length}`);
+  }
+
+  function exportWav() {
+    if (!state.audioBuffer || state.audioCutStart == null || state.audioEndOut == null) return;
+    const wav = renderWavBlob();
+    const name = `${baseName(state.audioFileName)}_short.wav`;
+    downloadBlob(wav, name);
+    setExportStatus(`${tr('exportWavDone')}: ${name}\n${tr('lengthLabel')}: ${fmt(state.audioEndOut)}`);
+  }
+
+  function renderWavBlob() {
+    const buffer = state.audioBuffer;
+    const sr = buffer.sampleRate;
+    const channels = buffer.numberOfChannels;
+    const startSample = Math.max(0, Math.floor(state.audioCutStart * sr));
+    const outSamples = Math.max(1, Math.min(buffer.length - startSample, Math.floor(state.audioEndOut * sr)));
+    const bytesPerSample = 2;
+    const blockAlign = channels * bytesPerSample;
+    const dataBytes = outSamples * blockAlign;
+    const ab = new ArrayBuffer(44 + dataBytes);
+    const view = new DataView(ab);
+    writeAscii(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataBytes, true);
+    writeAscii(view, 8, 'WAVE');
+    writeAscii(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, channels, true);
+    view.setUint32(24, sr, true);
+    view.setUint32(28, sr * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, 16, true);
+    writeAscii(view, 36, 'data');
+    view.setUint32(40, dataBytes, true);
+    const channelData = [];
+    for (let ch = 0; ch < channels; ch++) channelData.push(buffer.getChannelData(ch));
+    let offset = 44;
+    for (let i = 0; i < outSamples; i++) {
+      const outSec = i / sr;
+      const gain = gainForRender(outSec);
+      const srcIdx = startSample + i;
+      for (let ch = 0; ch < channels; ch++) {
+        let sample = (channelData[ch][srcIdx] || 0) * gain;
+        sample = Math.max(-1, Math.min(1, sample));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        offset += 2;
+      }
+    }
+    return new Blob([ab], { type: 'audio/wav' });
+  }
+
+  function gainForRender(outSec) {
+    let g = 1;
+    if (state.fadeInSec > 0 && outSec < state.fadeInSec) {
+      g *= clamp(outSec / state.fadeInSec, 0, 1);
+    }
+    if (state.fadeOutStartOut != null && state.audioEndOut != null && outSec >= state.fadeOutStartOut) {
+      const dur = Math.max(0.001, state.audioEndOut - state.fadeOutStartOut);
+      g *= clamp((state.audioEndOut - outSec) / dur, 0, 1);
+    }
+    return g;
+  }
+
+  function writeAscii(view, offset, str) {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  }
+
+  function isAudioFile(file) {
+    const name = (file && file.name || '').toLowerCase();
+    return name.endsWith('.mp3') || name.endsWith('.wav') || (file && file.type && file.type.startsWith('audio/'));
+  }
+
+  function isSrtFile(file) {
+    const name = (file && file.name || '').toLowerCase();
+    return name.endsWith('.srt');
+  }
+
+  async function loadDroppedFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    const audio = files.find(isAudioFile);
+    const srt = files.find(isSrtFile);
+    if (!audio && !srt) {
+      setStatus(tr('dropNoSupported'));
+      return;
+    }
+    const ignored = files.length - (audio ? 1 : 0) - (srt ? 1 : 0);
+    setStatus(tr('loadStatusInitial'));
+    try {
+      if (audio) await loadAudioFile(audio, { appendStatus: false });
+      if (srt) await loadSrtFile(srt, { appendStatus: !!audio });
+      if (ignored > 0) setStatus(`${els.loadStatus.textContent}
+${tr('droppedIgnored')}`);
+    } finally {
+      if (els.audioFile) els.audioFile.value = '';
+      if (els.srtFile) els.srtFile.value = '';
+    }
+  }
+
+  function preventFileDropDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  els.languageSelect.addEventListener('change', () => {
+    state.lang = els.languageSelect.value || 'ja';
+    applyLanguage();
+    renderSrtList(true);
+    updateTerminal();
+    draw();
+  });
+
+  els.audioPickBtn.addEventListener('click', () => els.audioFile.click());
+  els.srtPickBtn.addEventListener('click', () => els.srtFile.click());
+  els.audioFile.addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0];
+    try { if (file) await loadAudioFile(file); } finally { e.target.value = ''; }
+  });
+  els.srtFile.addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0];
+    try { if (file) await loadSrtFile(file, { appendStatus: !!state.audioBuffer }); } finally { e.target.value = ''; }
+  });
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(type => {
+    document.addEventListener(type, preventFileDropDefaults, false);
+  });
+  ['dragenter', 'dragover'].forEach(type => {
+    els.dropZone.addEventListener(type, () => els.dropZone.classList.add('dragOver'));
+  });
+  ['dragleave', 'drop'].forEach(type => {
+    els.dropZone.addEventListener(type, () => els.dropZone.classList.remove('dragOver'));
+  });
+  els.dropZone.addEventListener('drop', e => {
+    const dt = e.dataTransfer;
+    if (dt && dt.files) loadDroppedFiles(dt.files);
+  });
+  els.undoBtn.addEventListener('click', undo);
+  els.playBtn.addEventListener('click', play);
+  els.toStartBtn.addEventListener('click', () => {
+    const target = state.viewMode === 'output' && state.audioCutStart != null ? 0 : 0;
+    setSelectedPlayhead(target, { syncSubtitle: true, addUndo: true, label: '先頭へ' });
+    centerView(target, Math.max(0.2, state.viewEnd - state.viewStart));
+    draw(); updateLabels();
+  });
+  els.zoomInBtn.addEventListener('click', () => zoom(0.5));
+  els.standardZoomBtn.addEventListener('click', setStandardZoom);
+  els.zoomOutBtn.addEventListener('click', () => zoom(2));
+  els.showAllBtn.addEventListener('click', setFullView);
+  els.showEndBtn.addEventListener('click', () => {
+    if (state.audioEndOut != null) {
+      setSelectedPlayhead(state.audioEndOut, { syncSubtitle: true, addUndo: true, label: '終端へ' });
+      centerView(state.audioEndOut, Math.max(0.2, state.viewEnd - state.viewStart));
+    }
+    draw(); updateLabels();
+  });
+  els.setAnchorBtn.addEventListener('click', setAnchorHere);
+  els.fadeInSelect.addEventListener('change', () => {
+    pushUndo('フェードイン変更');
+    state.fadeInSec = Number(els.fadeInSelect.value || 0.1);
+    if (state.anchorSource != null) {
+      const oldSelectedSource = sourceFromDisplay(state.selectedPlayhead);
+      state.audioCutStart = Math.max(0, state.anchorSource - state.fadeInSec);
+      const remaining = Math.max(0.001, state.audioBuffer.duration - state.audioCutStart);
+      state.outputMaxSec = Math.min(state.safeLimitSec, remaining);
+      state.audioEndOut = Math.min(state.audioEndOut ?? state.outputMaxSec, state.outputMaxSec);
+      state.fadeOutStartOut = clamp(state.fadeOutStartOut ?? Math.max(0, state.audioEndOut - 3), 0, Math.max(0, state.audioEndOut - 0.01));
+      if (state.viewMode === 'output') {
+        state.selectedPlayhead = clamp(oldSelectedSource - state.audioCutStart, 0, getOutputDuration());
+        state.playhead = state.selectedPlayhead;
+        state.viewEnd = Math.min(state.viewEnd, getDisplayMax());
+        if (state.viewStart >= state.viewEnd) state.viewStart = 0;
+      }
+      updateTerminal();
+    }
+    draw(); updateLabels();
+  });
+  els.safeLimitInput.addEventListener('change', updateSafeLimit);
+  els.setEndBtn.addEventListener('click', setEndHere);
+  els.setFadeStartBtn.addEventListener('click', setFadeStartHere);
+  els.terminalEdit.addEventListener('focus', () => {
+    if (!state.editSnapshotPushed) {
+      pushUndo('終端字幕編集');
+      state.editSnapshotPushed = true;
+    }
+  });
+  els.terminalEdit.addEventListener('blur', () => { state.editSnapshotPushed = false; });
+  els.terminalEdit.addEventListener('input', () => { state.terminalEditedText = els.terminalEdit.value; });
+  els.exportWavBtn.addEventListener('click', exportWav);
+  els.exportSrtBtn.addEventListener('click', exportSrt);
+
+  els.canvas.addEventListener('mousedown', onCanvasDown);
+  window.addEventListener('mousemove', onCanvasMove);
+  window.addEventListener('mouseup', onCanvasUp);
+  els.canvas.addEventListener('dblclick', () => {
+    if (!state.audioBuffer) return;
+    centerView(state.selectedPlayhead, Math.min(10, getDisplayMax()));
+    draw();
+  });
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); undo(); return; }
+    if (e.target && ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if (e.code === 'Space') { e.preventDefault(); state.isPlaying ? stopPlayback(true, true) : play(); }
+    if (e.code === 'ArrowLeft') { e.preventDefault(); nudgePlayhead(e.shiftKey ? -1 : -0.1); }
+    if (e.code === 'ArrowRight') { e.preventDefault(); nudgePlayhead(e.shiftKey ? 1 : 0.1); }
+  });
+
+  function nudgePlayhead(delta) {
+    const max = state.viewMode === 'output' ? getOutputDuration() : (state.audioBuffer ? state.audioBuffer.duration : 0);
+    setSelectedPlayhead(state.selectedPlayhead + delta, { syncSubtitle: true, addUndo: true, label: 'キーボード移動' });
+    if (state.selectedPlayhead < state.viewStart || state.selectedPlayhead > state.viewEnd) centerView(state.selectedPlayhead, state.viewEnd - state.viewStart);
+    draw(); updateLabels();
+  }
+
+  applyLanguage();
+  resizeCanvas();
+  updateLabels();
+})();
+</script>
+</body>
+</html>
