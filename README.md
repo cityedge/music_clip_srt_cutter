@@ -1,4 +1,4 @@
-# Music Clip & SRT Cutter for Short Movie v1.0.0
+# Music Clip & SRT Cutter for Short Movie v1.0.4
 
 Music Clip & SRT Cutter for Short Movie は、フルコーラスの音源ファイル（MP3 / WAV）と、その曲に対応する完成済みSRT字幕から、ショート動画用のWAV音源とSRT字幕を作成するためのローカルHTMLアプリです。
 
@@ -11,7 +11,7 @@ This is a local browser-based HTML5 app for creating short-movie WAV/SRT assets 
 - SRT input
 - Drag-and-drop loading for audio and SRT files
 - Waveform display with click-to-select positioning
-- SRT row click navigation
+- SRT row click navigation with automatic standard zoom
 - Start-point selection with short fade-in
 - Safe duration limit, default `179.800` seconds
 - Free end-point selection within the safe limit
@@ -25,6 +25,7 @@ This is a local browser-based HTML5 app for creating short-movie WAV/SRT assets 
 - Short SRT output with renumbering
 - Japanese / English UI switching
 - Tooltip help for major UI elements
+- ±10 / ±30 second navigation buttons near the waveform
 - Undo support for editing operations
 
 ## Recommended environment
