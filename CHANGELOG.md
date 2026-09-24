@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.5
+
+- Added implicit drag-and-drop support to the loading-status message area below the main drop zone. It accepts files exactly like the visible drop zone without adding new UI text.
+- Changed the default safe duration limit from `179.800` seconds to `179.700` seconds.
+- Updated application and documentation version labels to v1.0.5.
+
 ## v1.0.4
 
 - Changed SRT row click navigation so that the waveform automatically switches to the standard zoom level around the clicked subtitle.
@@ -7,7 +13,7 @@
 - These buttons move the selected playback position by the specified number of seconds and move the waveform view to that position.
 - Audio processing and SRT export timing logic are unchanged from v1.0.3.
 
-## v1.0.4
+## v1.0.3
 
 - Changed the `End` / `終端へ` navigation behavior.
 - Pressing `End` now moves the waveform view to the end point while placing the selected playback position near the center of the visible window, instead of selecting the exact end point.
@@ -49,7 +55,7 @@
   - Actual cut position calculated as start position minus fade-in length.
   - Short fade-in options for click-noise reduction.
 - Added output-time waveform mode after the start position is set.
-- Added safe limit line, default `179.800` seconds.
+- Added safe limit line, default `179.700` seconds.
 - Added free end-point selection within the safe limit.
 - Added fade-out start and end-point markers.
 - Added preview playback reflecting fade-in and fade-out.

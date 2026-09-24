@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="1.0.4">
-<title>Music Clip &amp; SRT Cutter for Short Movie v1.0.4</title>
+<meta name="app-version" content="1.0.5">
+<title>Music Clip &amp; SRT Cutter for Short Movie v1.0.5</title>
 <style>
   :root {
     --bg: #111318;
@@ -182,7 +182,7 @@
 <header>
   <div class="topBar">
     <div class="titleBlock">
-      <h1 data-i18n="appTitle" data-tip="appTitleTip">Music Clip &amp; SRT Cutter for Short Movie v1.0.4</h1>
+      <h1 data-i18n="appTitle" data-tip="appTitleTip">Music Clip &amp; SRT Cutter for Short Movie v1.0.5</h1>
       <div class="sub" data-i18n="appSubtitle" data-tip="appSubtitleTip">HTML5単体版。MP3/WAV + 完成済みSRTから、ショート用WAV/SRTを作成します。</div>
     </div>
     <div class="languageBox">
@@ -284,7 +284,7 @@
     <div class="panelHead" data-i18n="endPanel" data-tip="endPanelTip">終端設定</div>
     <div class="panelBody">
       <label data-i18n="safeLimitLabel" data-tip="safeLimitTip">safe limit（秒）</label>
-      <input id="safeLimitInput" type="number" min="1" max="180" step="0.001" value="179.800" data-tip="safeLimitTip">
+      <input id="safeLimitInput" type="number" min="1" max="180" step="0.001" value="179.700" data-tip="safeLimitTip">
       <div class="spacer"></div>
       <div class="row">
         <button id="setFadeStartBtn" data-i18n="setFadeStartBtn" data-tip="setFadeStartTip" disabled>現在位置をフェード開始</button>
@@ -338,7 +338,7 @@
     anchorSource: null,
     fadeInSec: 0.10,
     audioCutStart: null,
-    safeLimitSec: 179.8,
+    safeLimitSec: 179.7,
     outputMaxSec: null,
     fadeOutStartOut: null,
     audioEndOut: null,
@@ -374,7 +374,7 @@
 
   const I18N = {
     ja: {
-      appTitle: 'Music Clip & SRT Cutter for Short Movie v1.0.4',
+      appTitle: 'Music Clip & SRT Cutter for Short Movie v1.0.5',
       appSubtitle: 'HTML5単体版。MP3/WAV + 完成済みSRTから、ショート用WAV/SRTを作成します。',
       languageLabel: '言語／Language',
       inputPanel: '入力とSRT', fileGroupLabel: '音源ファイル（MP3/WAV）、SRTファイル', audioFileLabel: '音源ファイル（MP3/WAV）', audioPickBtn: '音源を選択', srtFileLabel: 'SRTファイル', srtPickBtn: 'SRTを選択', dropZoneTitle: '音源とSRTをここにドロップ', dropZoneBody: 'MP3/WAVとSRTをまとめて読み込めます。新しいファイルを読むと編集状態はリセットされます。', loadStatusInitial: '音源とSRTを読み込んでください。', fileNotSelected: '選択されていません',
@@ -396,12 +396,12 @@
       srtListTip: '字幕行をクリックすると、その行の開始時刻へ移動します。移動しても拡大率は変わりません。', wavePanelTip: '波形をクリックして選択位置を移動し、マーカーをドラッグして開始・終了を調整します。',
       toStartTip: 'カット後の先頭へ移動します。拡大率は変えません。', playTip: '選択位置から再生します。再生中は同じボタンで停止します。', zoomInTip: '選択位置を中心に波形を拡大します。', standardZoomTip: '選択位置を中心に、開始・終端確認に使いやすい標準倍率にします。', zoomOutTip: '選択位置を中心に波形を縮小します。', showAllTip: '現在の表示範囲全体を表示します。', showEndTip: '終了点が見える位置へ移動し、選択位置は表示ウィンドウ中央付近に置きます。拡大率は変えません。', secMinusTip: '選択位置を秒ぴったりの位置へ戻します。45.156秒なら45.000秒へ、45.000秒なら44.000秒へ移動します。', secPlusTip: '選択位置を次の秒ぴったりの位置へ進めます。45.156秒でも45.000秒でも46.000秒へ移動します。', jumpBack30Tip: '選択位置を30秒戻し、表示位置もそこへ移動します。', jumpBack10Tip: '選択位置を10秒戻し、表示位置もそこへ移動します。', jumpForward10Tip: '選択位置を10秒進め、表示位置もそこへ移動します。', jumpForward30Tip: '選択位置を30秒進め、表示位置もそこへ移動します。', undoTip: '直前の編集操作を戻します。Ctrl+Zでも戻せます。', mainHintTip: '再生開始位置は最後に選択した位置で固定され、停止するとそこへ戻ります。',
       startPanelTip: 'ショート音源の開始基準点と先頭フェードを設定します。', fadeInTip: '開始位置の直前からこの長さでフェードインします。クリックノイズ防止用です。', setAnchorTip: '現在の選択位置を歌い出し基準点として確定します。実カット位置はフェードイン分だけ手前になります。',
-      endPanelTip: 'フェードアウト開始点と音源の終了点を設定します。', safeLimitTip: '3分制限を超えないための実用上限です。初期値は179.800秒です。', setFadeStartTip: '現在の選択位置を、フル音量を維持する最終点として設定します。', setEndTip: '現在の選択位置を、音源が完全に終わる点として設定します。',
+      endPanelTip: 'フェードアウト開始点と音源の終了点を設定します。', safeLimitTip: '3分制限を超えないための実用上限です。初期値は179.700秒です。', setFadeStartTip: '現在の選択位置を、フル音量を維持する最終点として設定します。', setEndTip: '現在の選択位置を、音源が完全に終わる点として設定します。',
       terminalPanelTip: '終了点をまたぐ字幕の出力時テキストを調整します。', terminalOriginalTip: '終了点と重なる元字幕を表示します。', terminalEditTip: '出力する最後の字幕テキストです。空欄にするとその字幕は出力しません。',
       outputPanelTip: 'ショート用WAVとSRTを個別に保存します。', exportWavTip: '現在の開始・終了・フェード設定でWAVを保存します。', exportSrtTip: '現在の開始・終了・終端字幕設定でSRTを保存します。', exportStatusTip: '保存結果や注意事項を表示します。'
     },
     en: {
-      appTitle: 'Music Clip & SRT Cutter for Short Movie v1.0.4',
+      appTitle: 'Music Clip & SRT Cutter for Short Movie v1.0.5',
       appSubtitle: 'Single-file HTML5 prototype. Create short-form WAV/SRT files from one full-length MP3/WAV and a finished SRT.',
       languageLabel: 'Language／言語',
       inputPanel: 'Input and SRT', fileGroupLabel: 'Audio file (MP3/WAV), SRT file', audioFileLabel: 'Audio file (MP3/WAV)', audioPickBtn: 'Choose audio', srtFileLabel: 'SRT file', srtPickBtn: 'Choose SRT', dropZoneTitle: 'Drop audio and SRT files here', dropZoneBody: 'Load MP3/WAV and SRT together. Loading new files resets the edit state.', loadStatusInitial: 'Load an audio file and an SRT file.', fileNotSelected: 'No file selected',
@@ -423,7 +423,7 @@
       srtListTip: 'Click a subtitle row to move to that subtitle start time. This does not change zoom level.', wavePanelTip: 'Click the waveform to move the selected position. Drag markers to adjust start and end settings.',
       toStartTip: 'Move to the beginning of the cut range without changing zoom.', playTip: 'Play from the selected position. During playback, this same button stops playback.', zoomInTip: 'Zoom in around the selected position.', standardZoomTip: 'Set a practical default zoom level around the selected position for checking starts and endings.', zoomOutTip: 'Zoom out around the selected position.', showAllTip: 'Show the full current timeline.', showEndTip: 'Move the view to the end point and place the selected position near the center of the visible window without changing zoom.', secMinusTip: 'Move the selected position back to the whole-second boundary. From 45.156 sec it moves to 45.000 sec; from 45.000 sec it moves to 44.000 sec.', secPlusTip: 'Move the selected position forward to the next whole-second boundary. From 45.156 sec or 45.000 sec it moves to 46.000 sec.', jumpBack30Tip: 'Move the selected position back 30 seconds and move the view there.', jumpBack10Tip: 'Move the selected position back 10 seconds and move the view there.', jumpForward10Tip: 'Move the selected position forward 10 seconds and move the view there.', jumpForward30Tip: 'Move the selected position forward 30 seconds and move the view there.', undoTip: 'Undo the last edit. Ctrl+Z also works.', mainHintTip: 'The replay start position is fixed at the last selected position; stopping returns to that position.',
       startPanelTip: 'Set the short audio start anchor and the start fade-in.', fadeInTip: 'Fade in over this duration immediately before the start anchor. Used mainly to avoid clicks.', setAnchorTip: 'Use the selected position as the vocal/start anchor. The actual cut point is moved earlier by the fade-in duration.',
-      endPanelTip: 'Set the fade-out start and the final audio end point.', safeLimitTip: 'Practical duration limit to avoid exceeding three minutes. Default is 179.800 seconds.', setFadeStartTip: 'Use the selected position as the last full-volume point before fade-out.', setEndTip: 'Use the selected position as the point where the audio ends completely.',
+      endPanelTip: 'Set the fade-out start and the final audio end point.', safeLimitTip: 'Practical duration limit to avoid exceeding three minutes. Default is 179.700 seconds.', setFadeStartTip: 'Use the selected position as the last full-volume point before fade-out.', setEndTip: 'Use the selected position as the point where the audio ends completely.',
       terminalPanelTip: 'Adjust the text exported for the subtitle that overlaps the end point.', terminalOriginalTip: 'Shows the original subtitle overlapping the end point.', terminalEditTip: 'Text to export for the final overlapping subtitle. Clear it to omit that subtitle.',
       outputPanelTip: 'Save the short WAV and SRT separately.', exportWavTip: 'Save the WAV using the current cut and fade settings.', exportSrtTip: 'Save the SRT using the current cut, end, and terminal subtitle settings.', exportStatusTip: 'Shows export results and warnings.'
     }
@@ -873,7 +873,7 @@ ${msg}` : msg);
     state.anchorSource = source;
     state.fadeInSec = Number(els.fadeInSelect.value || 0.1);
     state.audioCutStart = Math.max(0, state.anchorSource - state.fadeInSec);
-    state.safeLimitSec = Number(els.safeLimitInput.value || 179.8);
+    state.safeLimitSec = Number(els.safeLimitInput.value || 179.7);
     const remaining = Math.max(0.001, state.audioBuffer.duration - state.audioCutStart);
     state.outputMaxSec = Math.min(state.safeLimitSec, remaining);
     state.viewMode = 'output';
@@ -893,7 +893,7 @@ ${msg}` : msg);
 
   function updateSafeLimit() {
     pushUndo('safe limit変更');
-    state.safeLimitSec = clamp(Number(els.safeLimitInput.value || 179.8), 1, 180);
+    state.safeLimitSec = clamp(Number(els.safeLimitInput.value || 179.7), 1, 180);
     els.safeLimitInput.value = state.safeLimitSec.toFixed(3);
     if (state.audioBuffer && state.audioCutStart != null) {
       const remaining = Math.max(0.001, state.audioBuffer.duration - state.audioCutStart);
@@ -1512,6 +1512,10 @@ ${tr('droppedIgnored')}`);
     els.dropZone.addEventListener(type, () => els.dropZone.classList.remove('dragOver'));
   });
   els.dropZone.addEventListener('drop', e => {
+    const dt = e.dataTransfer;
+    if (dt && dt.files) loadDroppedFiles(dt.files);
+  });
+  els.loadStatus.addEventListener('drop', e => {
     const dt = e.dataTransfer;
     if (dt && dt.files) loadDroppedFiles(dt.files);
   });
